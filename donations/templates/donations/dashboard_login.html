@@ -1,0 +1,28 @@
+{% extends "donations/base.html" %}
+
+{% block title %}Staff portal — Rotary Club of Padstow{% endblock %}
+
+{% block content %}
+  <div class="card" style="max-width:420px;margin:40px auto 0;">
+    <h2 style="font-size:20px;">Staff portal</h2>
+    <p class="muted">For authorised Rotary Club committee members only.</p>
+
+    <!--
+      Recommended: replace this with Django's built-in auth
+      (django.contrib.auth.forms.AuthenticationForm + LoginView)
+      instead of a custom form, so passwords are handled securely.
+    -->
+    <form method="post" action="{% url 'dashboard_login' %}">
+      {% csrf_token %}
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" name="username" id="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" required>
+      </div>
+      <button type="submit" class="btn btn-dark btn-block">Sign in</button>
+    </form>
+  </div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "donations/base.html" %}
+
+{% block title %}Thank you — Rotary Club of Padstow{% endblock %}
+
+{% block content %}
+  <div class="confirm-wrap">
+    <div class="check-circle" aria-hidden="true">✓</div>
+    <h2>Thank you — you're all set</h2>
+    <p class="muted">A confirmation and digital receipt have been sent to your email automatically. No further action is needed.</p>
+
+    <!-- `transaction` should be passed from the view, e.g. get_object_or_404(Transaction, reference=ref) -->
+    <div class="receipt" aria-label="Digital receipt">
+      <div class="receipt-row"><span>Reference</span><span>{{ transaction.reference }}</span></div>
+      <div class="receipt-row"><span>Type</span><span>{{ transaction.get_type_display }}</span></div>
+      <div class="receipt-row"><span>Name</span><span>{{ transaction.name }}</span></div>
+      <div class="receipt-row"><span>Date</span><span>{{ transaction.created_at|date:"d M Y" }}</span></div>
+      <div class="receipt-row"><span>Amount paid</span><span>${{ transaction.amount }}</span></div>
+      <div class="receipt-row"><span>Status</span><span class="status {{ transaction.status }}">{{ transaction.get_status_display }}</span></div>
+    </div>
+
+    <div class="hero-actions" style="justify-content:center;margin-top:28px;">
+      <a class="btn btn-dark" href="{% url 'home' %}">Back to home</a>
+      <a class="btn btn-outline" href="{% url 'shop' %}">Order another item</a>
+    </div>
+  </div>
+{% endblock %}

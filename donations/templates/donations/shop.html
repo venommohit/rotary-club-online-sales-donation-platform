@@ -1,0 +1,79 @@
+{% extends "donations/base.html" %}
+{% load static %}
+
+{% block title %}Buy products — Rotary Club of Padstow{% endblock %}
+{% block nav_shop %}active{% endblock %}
+
+{% block content %}
+  <div class="step-labels"><span>Step 1 of 3</span><span>Select your tree</span></div>
+  <div class="step-track"><div class="dot now"></div><div class="dot"></div><div class="dot"></div></div>
+
+  <h2>2026 Christmas Tree sale</h2>
+  <p class="muted" style="max-width:60ch;">Fresh-cut trees, delivered locally or ready for pickup at Bunnings Padstow. All proceeds fund Rotary community projects.</p>
+
+  <div class="two-col" style="margin-top:26px;">
+    <div>
+      <!--
+        `products` is expected from the view, e.g.:
+        products = Product.objects.filter(active=True)
+        Each product needs: id, name, description, price, emoji (optional)
+      -->
+      <form method="post" action="{% url 'shop' %}" id="shopForm">
+        {% csrf_token %}
+
+        {% for product in products %}
+        <div class="product-card">
+          <div class="product-thumb" aria-hidden="true">{{ product.emoji|default:"🎄" }}</div>
+          <div class="product-info">
+            <h4>{{ product.name }}</h4>
+            <p class="muted" style="margin:0;font-size:14px;">{{ product.description }}</p>
+          </div>
+          <div class="qty-stepper" data-product-id="{{ product.id }}" data-price="{{ product.price }}">
+            <button type="button" class="qty-minus" aria-label="Decrease quantity">–</button>
+            <input type="number" name="qty_{{ product.id }}" value="0" min="0" style="width:44px;text-align:center;padding:6px;" readonly>
+            <button type="button" class="qty-plus" aria-label="Increase quantity">+</button>
+          </div>
+          <div class="price">${{ product.price }}</div>
+        </div>
+        {% empty %}
+        <p class="empty-note">No products are available right now — check back soon.</p>
+        {% endfor %}
+
+        <fieldset style="margin-top:28px;">
+          <legend>Delivery or pickup</legend>
+          <div class="field">
+            <label for="fulfilment">How would you like to receive your tree?</label>
+            <select name="fulfilment" id="fulfilment">
+              <option value="pickup">Pickup at Bunnings Padstow (free)</option>
+              <option value="delivery">Local delivery — Padstow / Panania area ($15)</option>
+            </select>
+          </div>
+        </fieldset>
+        <div class="field">
+          <label for="buyer_name">Full name</label>
+          <input type="text" name="buyer_name" id="buyer_name" required>
+        </div>
+        <div class="field">
+          <label for="buyer_email">Email address</label>
+          <input type="email" name="buyer_email" id="buyer_email" required>
+        </div>
+      </form>
+    </div>
+
+    <aside class="summary-box" aria-label="Order summary">
+      <h3 style="font-size:16px;">Order summary</h3>
+      <div id="cartLines">
+        <p class="empty-note">Your cart is empty — add a tree to continue.</p>
+      </div>
+      <div class="summary-row"><span>Delivery</span><span id="sumDelivery">Free</span></div>
+      <div class="summary-row total"><span>Total</span><span id="cartTotal">$0.00</span></div>
+      <button class="btn btn-primary btn-block" style="margin-top:16px;" id="shopContinue" form="shopForm" type="submit" disabled>
+        Continue to secure payment
+      </button>
+    </aside>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'donations/js/shop.js' %}"></script>
+{% endblock %}

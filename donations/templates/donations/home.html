@@ -1,0 +1,64 @@
+{% extends "donations/base.html" %}
+{% load static %}
+
+{% block title %}Rotary Club of Padstow — Donate &amp; Shop{% endblock %}
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+  <div class="hero">
+    <div>
+      <span class="hero-badge">2026 Christmas Tree season now open</span>
+      <h1>Give, buy, and support Padstow — all in one trusted place.</h1>
+      <p class="lead">A simple, secure way to donate to local causes or order this year's Rotary Christmas trees. No account needed, no card details stored on our side — just a few clear steps.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{% url 'donate' %}">Make a donation</a>
+        <a class="btn btn-outline" style="border-color:#fff;color:#fff" href="{% url 'shop' %}">Buy a Christmas tree</a>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="stat"><span>Since 1957</span><b>69 years of service</b></div>
+      <div class="stat"><span>This season</span><b>Trees &amp; donations open</b></div>
+      <div class="stat"><span>Payments handled by</span><b>Trusted external gateway</b></div>
+      <div class="stat"><span>Card details stored?</span><b>Never on our platform</b></div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="section-head">
+      <h2>Two ways to support the club</h2>
+      <span class="muted">Pick one — both take under two minutes</span>
+    </div>
+    <div class="grid-3">
+      <div class="card path-card">
+        <div class="icon" aria-hidden="true">♥</div>
+        <h3>Donate</h3>
+        <p class="muted">Support Padstow Rotary's local and international projects directly, in any amount.</p>
+        <a class="btn btn-dark btn-block" href="{% url 'donate' %}">Go to donations</a>
+      </div>
+      <div class="card path-card alt">
+        <div class="icon" aria-hidden="true">🎄</div>
+        <h3>Buy products</h3>
+        <p class="muted">Order a Christmas tree for pickup or delivery — our biggest fundraiser of the year.</p>
+        <a class="btn btn-dark btn-block" href="{% url 'shop' %}">Shop now</a>
+      </div>
+      <div class="card path-card">
+        <div class="icon" aria-hidden="true">🧾</div>
+        <h3>Already ordered?</h3>
+        <p class="muted">Every purchase and donation gets an automatic confirmation and digital receipt by email.</p>
+        {% if last_reference %}
+          <a class="btn btn-outline btn-block" href="{% url 'confirmation' %}?ref={{ last_reference }}">View your last receipt</a>
+        {% else %}
+          <span class="btn btn-outline btn-block" style="opacity:.6;pointer-events:none;">No recent receipt</span>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="block card" style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+    <div style="flex:1;min-width:240px;">
+      <h3>Built with our older members and donors in mind</h3>
+      <p class="muted" style="margin:0;">Large text, high-contrast buttons, and short forms with as few steps as possible — because our members range from their 40s to their 70s and 80s.</p>
+    </div>
+    <a class="btn btn-outline" href="{% url 'dashboard_login' %}">Staff / committee access →</a>
+  </section>
+{% endblock %}

@@ -1,0 +1,7 @@
+<div class="admin-side">
+  <div class="who">Signed in as<br><strong style="color:#fff;">{{ request.session.staff_user|default:"committee" }}</strong></div>
+  <a href="{% url 'dashboard' %}" class="{% if active_tab == 'overview' %}active{% endif %}">Overview</a>
+  <a href="{% url 'dashboard_transactions' %}" class="{% if active_tab == 'transactions' %}active{% endif %}">Orders &amp; donations</a>
+  <a href="{% url 'dashboard_reports' %}" class="{% if active_tab == 'reports' %}active{% endif %}">Basic reports</a>
+  <a href="{% url 'home' %}" style="margin-top:18px;color:#BFE6CD;">← Exit to public site</a>
+</div>

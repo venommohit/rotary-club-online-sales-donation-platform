@@ -1,0 +1,65 @@
+{% extends "donations/base.html" %}
+{% load static %}
+
+{% block title %}Donate — Rotary Club of Padstow{% endblock %}
+{% block nav_donate %}active{% endblock %}
+
+{% block content %}
+  <div class="step-labels"><span>Step 1 of 3</span><span>Donation details</span></div>
+  <div class="step-track"><div class="dot now"></div><div class="dot"></div><div class="dot"></div></div>
+
+  <h2>Make a donation</h2>
+  <p class="muted" style="max-width:60ch;">100% of your donation supports Padstow Rotary's community and international projects. You'll be securely redirected to our payment provider — we never see or store your card details.</p>
+
+  <div class="two-col" style="margin-top:28px;">
+    <form class="form-wrap" method="post" action="{% url 'donate' %}" id="donateForm" novalidate>
+      {% csrf_token %}
+
+      <fieldset class="field">
+        <legend>Choose an amount (AUD)</legend>
+        <div class="amount-grid" role="group" aria-label="Preset donation amounts">
+          <button type="button" class="amount-btn" data-amount="25">$25</button>
+          <button type="button" class="amount-btn" data-amount="50" aria-pressed="true">$50</button>
+          <button type="button" class="amount-btn" data-amount="100">$100</button>
+          <button type="button" class="amount-btn" data-amount="other">Other</button>
+        </div>
+        <!-- Real field submitted to Django. Swap for {{ form.amount }} once you have a DonationForm. -->
+        <input type="number" name="amount" id="amount" min="5" step="1" value="50" required>
+        {% if form.amount.errors %}<ul class="errorlist">{% for e in form.amount.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </fieldset>
+
+      <div class="field">
+        <label for="donor_name">Full name</label>
+        <input type="text" name="donor_name" id="donor_name" required autocomplete="name"
+               value="{{ form.donor_name.value|default_if_none:'' }}">
+        {% if form.donor_name.errors %}<ul class="errorlist">{% for e in form.donor_name.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="donor_email">Email address</label>
+        <input type="email" name="donor_email" id="donor_email" required autocomplete="email"
+               value="{{ form.donor_email.value|default_if_none:'' }}">
+        <p class="hint">Your receipt will be sent here automatically.</p>
+        {% if form.donor_email.errors %}<ul class="errorlist">{% for e in form.donor_email.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+
+      <div class="field">
+        <label for="donor_message">Message (optional)</label>
+        <textarea name="donor_message" id="donor_message" rows="3" placeholder="Say a few words about why you're donating">{{ form.donor_message.value|default_if_none:'' }}</textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Continue to secure payment</button>
+    </form>
+
+    <aside class="summary-box" aria-label="Donation summary">
+      <h3 style="font-size:16px;">Your donation</h3>
+      <div class="summary-row"><span>Amount</span><span id="sumAmount">$50.00</span></div>
+      <div class="summary-row"><span>Processing</span><span>Covered by Rotary</span></div>
+      <div class="summary-row total"><span>Total today</span><span id="sumTotal">$50.00</span></div>
+    </aside>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'donations/js/donate.js' %}"></script>
+{% endblock %}

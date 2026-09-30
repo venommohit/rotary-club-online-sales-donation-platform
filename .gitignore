@@ -1,9 +1,8 @@
 __pycache__/
 *.pyc
-db.sqlite3
 .venv/
 venv/
 env/
 .vscode/
-*.sqlite3
-staticfiles/
+firebase-service-account.json
+.env

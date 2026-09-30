@@ -1,16 +1,16 @@
 # views.py
-# This wires up every template in /templates to a working Django view.
-# It uses the session to carry the "pending transaction" between
-# donate/shop -> payment -> confirmation, which mirrors a normal
-# hosted-checkout flow (Stripe/PayPal/Square) where you redirect out,
-# then come back and mark the transaction paid.
+#
+# Same page flow as before, but the data layer is now Firestore
+# (donations/firestore_data.py) instead of the Django ORM. Pending
+# donations/orders still travel through the Django session between
+# donate/shop -> payment -> confirmation, exactly like a real hosted
+# checkout redirect flow.
 
 from django.contrib import messages
-from django.db.models import Sum
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 
 from .forms import DonationForm, StaffLoginForm
-from .models import Product, Transaction, OrderItem
+from . import firestore_data as data
 
 
 def home(request):
@@ -24,6 +24,7 @@ def donate(request):
         if form.is_valid():
             request.session["pending_transaction"] = {
                 "type": "donation",
+                "type_display": "Donation",
                 "name": form.cleaned_data["donor_name"],
                 "email": form.cleaned_data["donor_email"],
                 "amount": str(form.cleaned_data["amount"]),
@@ -36,16 +37,21 @@ def donate(request):
 
 
 def shop(request):
-    products = Product.objects.filter(active=True)
+    products = data.list_active_products()
 
     if request.method == "POST":
         items = []
-        subtotal = 0
+        subtotal = 0.0
         for product in products:
-            qty = int(request.POST.get(f"qty_{product.id}", 0) or 0)
+            qty = int(request.POST.get(f"qty_{product['id']}", 0) or 0)
             if qty > 0:
-                items.append({"product_id": product.id, "quantity": qty, "unit_price": str(product.price)})
-                subtotal += qty * float(product.price)
+                items.append({
+                    "product_id": product["id"],
+                    "product_name": product["name"],
+                    "quantity": qty,
+                    "unit_price": float(product["price"]),
+                })
+                subtotal += qty * float(product["price"])
 
         if not items:
             messages.error(request, "Add at least one tree to your cart before continuing.")
@@ -57,6 +63,7 @@ def shop(request):
 
         request.session["pending_transaction"] = {
             "type": "sale",
+            "type_display": "Tree order",
             "name": request.POST.get("buyer_name", "Guest customer"),
             "email": request.POST.get("buyer_email", ""),
             "amount": str(total),
@@ -79,52 +86,46 @@ def payment(request):
         # In production you would NOT collect raw card fields yourself:
         # redirect to your payment provider (Stripe Checkout / PayPal /
         # Square), then handle their webhook or return_url here to
-        # confirm payment before creating/marking the Transaction as paid.
+        # confirm payment before writing the transaction to Firestore.
 
-        transaction = Transaction.objects.create(
+        reference = data.create_transaction(
             type=pending["type"],
             name=pending["name"],
             email=pending.get("email", ""),
             amount=pending["amount"],
             message=pending.get("message", ""),
             fulfilment=pending.get("fulfilment", ""),
+            items=pending.get("items"),
             status="paid",
         )
 
-        if pending["type"] == "sale":
-            for item in pending.get("items", []):
-                OrderItem.objects.create(
-                    transaction=transaction,
-                    product_id=item["product_id"],
-                    quantity=item["quantity"],
-                    unit_price=item["unit_price"],
-                )
-
-        request.session["last_reference"] = transaction.reference
+        request.session["last_reference"] = reference
         del request.session["pending_transaction"]
-        return redirect(f"/confirmation/?ref={transaction.reference}")
+        return redirect(f"/confirmation/?ref={reference}")
 
     return render(request, "donations/payment.html", {"pending": pending})
 
 
 def confirmation(request):
     ref = request.GET.get("ref")
-    transaction = get_object_or_404(Transaction, reference=ref) if ref else None
+    transaction = data.get_transaction(ref) if ref else None
+    if ref and not transaction:
+        messages.error(request, "We couldn't find that receipt.")
     return render(request, "donations/confirmation.html", {"transaction": transaction})
 
 
 # ---------------------------------------------------------------------------
 # Staff dashboard
-# NOTE: this uses a toy session flag for demo purposes. For a real deployment,
-# swap this for Django's built-in auth (@login_required, django.contrib.auth)
-# so passwords are hashed and access is properly protected.
+# NOTE: this uses a toy session flag for demo purposes, same as before —
+# swapping the database doesn't change that. See README for swapping
+# this to Firebase Authentication for real deployment.
 # ---------------------------------------------------------------------------
 
 def dashboard_login(request):
     if request.method == "POST":
         form = StaffLoginForm(request.POST)
         if form.is_valid():
-            # TODO: replace with django.contrib.auth.authenticate(...)
+            # TODO: replace with real Firebase Authentication sign-in.
             request.session["staff_user"] = form.cleaned_data["username"]
             return redirect("dashboard")
     else:
@@ -140,37 +141,28 @@ def dashboard(request):
     if not _require_staff(request):
         return redirect("dashboard_login")
 
-    transactions = Transaction.objects.all()
-    total_raised = transactions.aggregate(Sum("amount"))["amount__sum"] or 0
-    donations = transactions.filter(type="donation")
-    orders = transactions.filter(type="sale")
-    donation_total = donations.aggregate(Sum("amount"))["amount__sum"] or 0
-    avg_donation = round(donation_total / donations.count()) if donations.count() else 0
-
+    stats = data.get_summary_stats()
     return render(request, "donations/dashboard.html", {
-        "total_raised": total_raised,
-        "donation_count": donations.count(),
-        "order_count": orders.count(),
-        "avg_donation": avg_donation,
+        "total_raised": stats["total_raised"],
+        "donation_count": stats["donation_count"],
+        "order_count": stats["order_count"],
+        "avg_donation": stats["avg_donation"],
     })
 
 
 def dashboard_transactions(request):
     if not _require_staff(request):
         return redirect("dashboard_login")
-    transactions = Transaction.objects.order_by("-created_at")
+    transactions = data.list_transactions()
     return render(request, "donations/dashboard_transactions.html", {"transactions": transactions})
 
 
 def dashboard_reports(request):
     if not _require_staff(request):
         return redirect("dashboard_login")
-    transactions = Transaction.objects.all()
-    donation_total = transactions.filter(type="donation").aggregate(Sum("amount"))["amount__sum"] or 0
-    sales_total = transactions.filter(type="sale").aggregate(Sum("amount"))["amount__sum"] or 0
-    pending_count = transactions.filter(status="pending").count()
+    stats = data.get_summary_stats()
     return render(request, "donations/dashboard_reports.html", {
-        "donation_total": donation_total,
-        "sales_total": sales_total,
-        "pending_count": pending_count,
+        "donation_total": stats["donation_total"],
+        "sales_total": stats["sales_total"],
+        "pending_count": stats["pending_count"],
     })

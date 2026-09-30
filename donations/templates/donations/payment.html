@@ -15,10 +15,9 @@
       </div>
 
       <!--
-        In production, replace this form with your payment provider's
-        hosted fields / redirect (e.g. Stripe Checkout, PayPal, Square).
-        Do NOT collect or store raw card numbers on your own server.
-        This form is a visual placeholder only.
+        Placeholder only. In production, redirect to your payment
+        provider's hosted checkout (Stripe/PayPal/Square) instead of
+        collecting raw card fields yourself.
       -->
       <form class="form-wrap" method="post" action="{% url 'payment' %}" id="paymentForm">
         {% csrf_token %}
@@ -51,7 +50,7 @@
 
     <aside class="summary-box" aria-label="Payment summary">
       <h3 style="font-size:16px;">You're paying</h3>
-      <div class="summary-row"><span>{{ pending.type|default:"Donation" }}</span><span>${{ pending.amount|default:"0.00" }}</span></div>
+      <div class="summary-row"><span>{{ pending.type_display|default:"Donation" }}</span><span>${{ pending.amount|default:"0.00" }}</span></div>
       <div class="summary-row total"><span>Total</span><span>${{ pending.amount|default:"0.00" }}</span></div>
     </aside>
   </div>

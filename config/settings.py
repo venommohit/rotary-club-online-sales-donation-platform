@@ -1,10 +1,20 @@
 """
 Django settings for the Padstow Rotary donation & sales platform.
-Generated for a learning/uni project — see notes marked TODO before
-deploying this anywhere public.
+
+Data now lives in Firebase Firestore instead of a SQL database (see
+donations/firestore_client.py and donations/firestore_data.py), and
+Django's own admin/auth apps have been dropped along with it — the
+committee dashboard is the app's own views, not /admin/.
+
+With no ORM models anywhere in the project, this file deliberately has
+NO `DATABASES` setting at all. Django is fine running without one
+(it falls back to an empty {} internally) as long as nothing tries to
+use the ORM — which nothing here does. That also means there is no
+`manage.py migrate` step for this project any more.
 """
 
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,12 +27,9 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
+    "django.contrib.staticfiles",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "django.contrib.staticfiles",
     "donations",
 ]
 
@@ -31,7 +38,6 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -47,7 +53,6 @@ TEMPLATES = [
             "context_processors": [
                 "django.template.context_processors.debug",
                 "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
         },
@@ -57,19 +62,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+# No DATABASES setting — see module docstring. Django defaults to {}.
 
-AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
-]
+# Sessions are stored in a signed cookie on the client rather than a
+# database table, since there is no SQL database to store them in any
+# more. The cookie is signed (not encrypted) using SECRET_KEY, so don't
+# put anything in the session the user shouldn't be able to read —
+# only IDs/flags (pending_transaction, last_reference, staff_user),
+# never secrets.
+SESSION_ENGINE = "django.contrib.sessions.backends.signed_cookies"
 
 LANGUAGE_CODE = "en-au"
 TIME_ZONE = "Australia/Sydney"
@@ -81,3 +82,15 @@ STATIC_URL = "static/"
 # no STATICFILES_DIRS needed for this single-app project.
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------------------------------------------------------
+# Firebase
+# ---------------------------------------------------------------------------
+# Path to the service account JSON key downloaded from the Firebase
+# console (see README.md, section "Firebase setup"). Reads from an
+# environment variable so the key file itself never gets committed.
+FIREBASE_CREDENTIALS_PATH = os.environ.get(
+    "FIREBASE_CREDENTIALS_PATH",
+    str(BASE_DIR / "firebase-service-account.json"),
+)
+FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "")

@@ -14,9 +14,9 @@
   <div class="two-col" style="margin-top:26px;">
     <div>
       <!--
-        `products` is expected from the view, e.g.:
-        products = Product.objects.filter(active=True)
-        Each product needs: id, name, description, price, emoji (optional)
+        `products` comes from Firestore via donations/firestore_data.py
+        (list_active_products). Each item is a dict: id, name, description,
+        price, emoji.
       -->
       <form method="post" action="{% url 'shop' %}" id="shopForm">
         {% csrf_token %}

@@ -23,7 +23,6 @@
           <button type="button" class="amount-btn" data-amount="100">$100</button>
           <button type="button" class="amount-btn" data-amount="other">Other</button>
         </div>
-        <!-- Real field submitted to Django. Swap for {{ form.amount }} once you have a DonationForm. -->
         <input type="number" name="amount" id="amount" min="5" step="1" value="50" required>
         {% if form.amount.errors %}<ul class="errorlist">{% for e in form.amount.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
       </fieldset>

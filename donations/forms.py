@@ -13,9 +13,10 @@ class DonationForm(forms.Form):
 
 class StaffLoginForm(forms.Form):
     """
-    Minimal placeholder. Prefer swapping this for
-    django.contrib.auth.forms.AuthenticationForm + django.contrib.auth
-    so passwords are hashed and sessions are handled by Django properly.
+    Minimal placeholder — any username/password combination succeeds.
+    For real deployment, swap this for Firebase Authentication (see
+    README) or django.contrib.auth, rather than trusting a plain
+    session flag.
     """
     username = forms.CharField(max_length=150)
     password = forms.CharField(widget=forms.PasswordInput)

@@ -1,7 +1,5 @@
-// static/js/shop.js
+// static/donations/js/shop.js
 // Handles quantity steppers and the live order summary on the shop page.
-// Quantities are stored in real <input name="qty_<id>"> fields so Django
-// receives them on submit.
 (function () {
   "use strict";
 

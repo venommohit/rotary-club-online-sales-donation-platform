@@ -1,4 +1,4 @@
-// static/js/donate.js
+// static/donations/js/donate.js
 // Handles the preset/custom amount picker on the donate page.
 // The actual `amount` <input> is what gets submitted to Django.
 (function () {
@@ -24,7 +24,6 @@
       btn.setAttribute("aria-pressed", "true");
 
       if (btn.dataset.amount === "other") {
-        // Let the user type a custom amount directly into the real input.
         amountInput.readOnly = false;
         amountInput.focus();
       } else {
@@ -38,6 +37,5 @@
     setAmount(amountInput.value);
   });
 
-  // initialise summary with the input's starting value
   setAmount(amountInput.value);
 })();

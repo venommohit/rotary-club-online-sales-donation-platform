@@ -12,11 +12,8 @@
     {% include "donations/_dashboard_sidebar.html" with active_tab="overview" %}
     <div class="admin-main">
       <!--
-        Pass these from the view, e.g.:
-        total_raised   = transactions.aggregate(Sum('amount'))['amount__sum'] or 0
-        donation_count = transactions.filter(type='donation').count()
-        order_count    = transactions.filter(type='sale').count()
-        avg_donation   = ... 
+        totals computed in the view from Firestore data
+        (see donations/firestore_data.get_summary_stats)
       -->
       <div class="kpi-grid">
         <div class="kpi"><div class="num">${{ total_raised|default:"0" }}</div><div class="lbl">Raised this season</div></div>
@@ -24,7 +21,7 @@
         <div class="kpi"><div class="num">{{ order_count|default:"0" }}</div><div class="lbl">Tree orders</div></div>
         <div class="kpi"><div class="num">${{ avg_donation|default:"0" }}</div><div class="lbl">Average donation</div></div>
       </div>
-      <p class="muted" style="font-size:13.5px;">Figures update automatically as new orders and donations are recorded.</p>
+      <p class="muted" style="font-size:13.5px;">Figures update automatically as new orders and donations are recorded in Firestore.</p>
     </div>
   </div>
 {% endblock %}

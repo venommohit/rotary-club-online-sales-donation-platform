@@ -14,7 +14,11 @@
       <div class="section-head" style="margin-bottom:14px;">
         <h3 style="font-size:17px;margin:0;">All transactions</h3>
       </div>
-      <!-- `transactions` should be a queryset from the view, newest first -->
+      <!--
+        `transactions` is a list of plain dicts from Firestore
+        (donations/firestore_data.list_transactions), newest first,
+        each with type_display / status_display precomputed.
+      -->
       <div class="table-scroll">
         <table>
           <thead>
@@ -24,11 +28,11 @@
             {% for t in transactions %}
             <tr>
               <td>{{ t.reference }}</td>
-              <td><span class="type-tag {{ t.type }}">{{ t.get_type_display }}</span></td>
+              <td><span class="type-tag {{ t.type }}">{{ t.type_display }}</span></td>
               <td>{{ t.name }}</td>
               <td>{{ t.created_at|date:"d M Y" }}</td>
               <td>${{ t.amount }}</td>
-              <td><span class="status {{ t.status }}">{{ t.get_status_display }}</span></td>
+              <td><span class="status {{ t.status }}">{{ t.status_display }}</span></td>
             </tr>
             {% empty %}
             <tr><td colspan="6"><p class="empty-note">No transactions yet.</p></td></tr>

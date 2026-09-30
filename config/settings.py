@@ -94,3 +94,13 @@ FIREBASE_CREDENTIALS_PATH = os.environ.get(
     str(BASE_DIR / "firebase-service-account.json"),
 )
 FIREBASE_PROJECT_ID = os.environ.get("FIREBASE_PROJECT_ID", "")
+# --- Email (Gmail SMTP) — append to config/settings.py ---
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")  # your Gmail address
+EMAIL_HOST_PASSWORD = os.environ.get(
+    "EMAIL_HOST_PASSWORD", ""
+)  # the 16-char app password
+DEFAULT_FROM_EMAIL = f"Rotary Club of Padstow <{EMAIL_HOST_USER}>"

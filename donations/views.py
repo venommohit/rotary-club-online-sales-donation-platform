@@ -45,16 +45,20 @@ def shop(request):
         for product in products:
             qty = int(request.POST.get(f"qty_{product['id']}", 0) or 0)
             if qty > 0:
-                items.append({
-                    "product_id": product["id"],
-                    "product_name": product["name"],
-                    "quantity": qty,
-                    "unit_price": float(product["price"]),
-                })
+                items.append(
+                    {
+                        "product_id": product["id"],
+                        "product_name": product["name"],
+                        "quantity": qty,
+                        "unit_price": float(product["price"]),
+                    }
+                )
                 subtotal += qty * float(product["price"])
 
         if not items:
-            messages.error(request, "Add at least one tree to your cart before continuing.")
+            messages.error(
+                request, "Add at least one tree to your cart before continuing."
+            )
             return render(request, "donations/shop.html", {"products": products})
 
         fulfilment = request.POST.get("fulfilment", "pickup")
@@ -98,6 +102,23 @@ def payment(request):
             items=pending.get("items"),
             status="paid",
         )
+        reference = data.create_transaction(
+            type=pending["type"],
+            name=pending["name"],
+            email=pending.get("email", ""),
+            amount=pending["amount"],
+            message=pending.get("message", ""),
+            fulfilment=pending.get("fulfilment", ""),
+            items=pending.get("items"),
+            status="paid",
+        )
+
+        from .emails import send_confirmation_email
+
+        transaction = data.get_transaction(reference)
+        send_confirmation_email(transaction)
+
+        request.session["last_reference"] = reference
 
         request.session["last_reference"] = reference
         del request.session["pending_transaction"]
@@ -121,6 +142,7 @@ def confirmation(request):
 # this to Firebase Authentication for real deployment.
 # ---------------------------------------------------------------------------
 
+
 def dashboard_login(request):
     if request.method == "POST":
         form = StaffLoginForm(request.POST)
@@ -142,27 +164,37 @@ def dashboard(request):
         return redirect("dashboard_login")
 
     stats = data.get_summary_stats()
-    return render(request, "donations/dashboard.html", {
-        "total_raised": stats["total_raised"],
-        "donation_count": stats["donation_count"],
-        "order_count": stats["order_count"],
-        "avg_donation": stats["avg_donation"],
-    })
+    return render(
+        request,
+        "donations/dashboard.html",
+        {
+            "total_raised": stats["total_raised"],
+            "donation_count": stats["donation_count"],
+            "order_count": stats["order_count"],
+            "avg_donation": stats["avg_donation"],
+        },
+    )
 
 
 def dashboard_transactions(request):
     if not _require_staff(request):
         return redirect("dashboard_login")
     transactions = data.list_transactions()
-    return render(request, "donations/dashboard_transactions.html", {"transactions": transactions})
+    return render(
+        request, "donations/dashboard_transactions.html", {"transactions": transactions}
+    )
 
 
 def dashboard_reports(request):
     if not _require_staff(request):
         return redirect("dashboard_login")
     stats = data.get_summary_stats()
-    return render(request, "donations/dashboard_reports.html", {
-        "donation_total": stats["donation_total"],
-        "sales_total": stats["sales_total"],
-        "pending_count": stats["pending_count"],
-    })
+    return render(
+        request,
+        "donations/dashboard_reports.html",
+        {
+            "donation_total": stats["donation_total"],
+            "sales_total": stats["sales_total"],
+            "pending_count": stats["pending_count"],
+        },
+    )

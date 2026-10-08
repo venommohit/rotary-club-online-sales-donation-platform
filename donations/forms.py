@@ -3,7 +3,7 @@ from django import forms
 
 
 class DonationForm(forms.Form):
-    amount = forms.DecimalField(min_value=5, max_digits=8, decimal_places=2)
+    amount = forms.DecimalField(min_value=5, max_value=10000, max_digits=8, decimal_places=2)
     donor_name = forms.CharField(max_length=150, label="Full name")
     donor_email = forms.EmailField(label="Email address")
     donor_message = forms.CharField(
@@ -12,11 +12,6 @@ class DonationForm(forms.Form):
 
 
 class StaffLoginForm(forms.Form):
-    """
-    Minimal placeholder — any username/password combination succeeds.
-    For real deployment, swap this for Firebase Authentication (see
-    README) or django.contrib.auth, rather than trusting a plain
-    session flag.
-    """
+    """Checked against STAFF_USERNAME / STAFF_PASSWORD in views.dashboard_login."""
     username = forms.CharField(max_length=150)
-    password = forms.CharField(widget=forms.PasswordInput)
+    password = forms.CharField(widget=forms.PasswordInput, max_length=200)

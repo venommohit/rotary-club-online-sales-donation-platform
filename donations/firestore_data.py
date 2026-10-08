@@ -5,20 +5,21 @@
 #
 #   products      — doc id auto-generated, fields: name, description,
 #                    price (float), emoji, active (bool)
-#   transactions  — doc id IS the reference (e.g. "RCP-2026-A1B2C3D4"),
+#   transactions  — doc id IS the reference (e.g. "RCP-2026-A1B2C3D4E5"),
 #                    fields: type, name, email, amount (float), message,
-#                    fulfilment, status, created_at (server timestamp),
-#                    items (list of maps, only for type="sale")
+#                    fulfilment, status, stripe_session_id, created_at
+#                    (server timestamp), items (list of maps, sales only)
 #
 # Using the reference as the document id means looking up a transaction
-# by reference (the confirmation page, ?ref=...) is a single direct
-# document read rather than a query — the cheap, scalable way to do it
-# in Firestore.
+# by reference is a single direct document read rather than a query, and
+# lets create_transaction_once() be atomic/idempotent (Firestore's create()
+# fails if the document already exists).
 
-import uuid
 from datetime import datetime
 
 from firebase_admin import firestore
+from google.api_core.exceptions import AlreadyExists
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from .firestore_client import get_db
 
@@ -38,7 +39,11 @@ TRANSACTIONS_COLLECTION = "transactions"
 def list_active_products():
     """Returns active products as a list of dicts, each with its doc id as 'id'."""
     db = get_db()
-    docs = db.collection(PRODUCTS_COLLECTION).where("active", "==", True).stream()
+    docs = (
+        db.collection(PRODUCTS_COLLECTION)
+        .where(filter=FieldFilter("active", "==", True))
+        .stream()
+    )
     products = []
     for doc in docs:
         data = doc.to_dict()
@@ -85,10 +90,6 @@ def seed_products(products):
 # Transactions
 # ---------------------------------------------------------------------------
 
-def _generate_reference():
-    return "RCP-2026-" + uuid.uuid4().hex[:8].upper()
-
-
 def _decorate(data):
     """Adds human-readable display labels, same job Django's
     get_FOO_display() would do on a model instance."""
@@ -97,17 +98,16 @@ def _decorate(data):
     return data
 
 
-def create_transaction(*, type, name, email, amount, message="", fulfilment="", items=None, status="paid"):
+def create_transaction_once(reference, *, type, name, email, amount, message="",
+                            fulfilment="", items=None, stripe_session_id="",
+                            status="paid"):
     """
-    Creates a transaction document with the reference as its id, and
-    (for a sale) writes matching OrderItem-style entries into the
-    `items` array field on the same document — Firestore has no joins,
-    so a small list of line items is embedded directly rather than put
-    in a separate collection.
+    Creates the transaction document with `reference` as its id — but only if it
+    doesn't exist yet. Returns True if this call created it, False if it was
+    already there (e.g. the Stripe webhook beat the browser redirect). Atomic, so
+    two simultaneous callers can't both get True.
     """
     db = get_db()
-    reference = _generate_reference()
-
     payload = {
         "reference": reference,
         "type": type,
@@ -117,13 +117,17 @@ def create_transaction(*, type, name, email, amount, message="", fulfilment="", 
         "message": message,
         "fulfilment": fulfilment,
         "status": status,
+        "stripe_session_id": stripe_session_id,
         "created_at": SERVER_TIMESTAMP,
     }
     if items:
         payload["items"] = items
 
-    db.collection(TRANSACTIONS_COLLECTION).document(reference).set(payload)
-    return reference
+    try:
+        db.collection(TRANSACTIONS_COLLECTION).document(reference).create(payload)
+    except AlreadyExists:
+        return False
+    return True
 
 
 def get_transaction(reference):
@@ -146,20 +150,14 @@ def list_transactions(limit=200):
         .limit(limit)
         .stream()
     )
-    results = []
-    for doc in docs:
-        data = doc.to_dict()
-        results.append(_decorate(data))
-    return results
+    return [_decorate(doc.to_dict()) for doc in docs]
 
 
 def get_summary_stats():
     """
     Computed by reading transactions and summing in Python — fine at
     club scale. If this collection grows large, replace with Firestore
-    aggregation queries (collection.count(), collection.sum('amount'))
-    or a maintained counters document updated by a Cloud Function on
-    each write, so this stops needing to read every row.
+    aggregation queries or a counters document updated on each write.
     """
     db = get_db()
     docs = db.collection(TRANSACTIONS_COLLECTION).stream()

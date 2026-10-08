@@ -4,54 +4,49 @@
 {% block title %}Secure payment — Rotary Club of Padstow{% endblock %}
 
 {% block content %}
-  <div class="step-labels"><span>Step 2 of 3</span><span>Secure payment</span></div>
-  <div class="step-track"><div class="dot done"></div><div class="dot now"></div><div class="dot"></div></div>
+<div class="step-labels"><span>Step 2 of 3</span><span>Secure payment</span></div>
+<div class="step-track">
+  <div class="dot done"></div>
+  <div class="dot now"></div>
+  <div class="dot"></div>
+</div>
 
-  <h2>Secure payment</h2>
-  <div class="two-col">
-    <div>
-      <div class="secure-banner">
-        🔒 <span>You're paying through our trusted external payment gateway. Padstow Rotary never sees or stores your card number.</span>
-      </div>
-
-      <!--
-        Placeholder only. In production, redirect to your payment
-        provider's hosted checkout (Stripe/PayPal/Square) instead of
-        collecting raw card fields yourself.
-      -->
-      <form class="form-wrap" method="post" action="{% url 'payment' %}" id="paymentForm">
-        {% csrf_token %}
-        <div class="field">
-          <label for="card_name">Name on card</label>
-          <input type="text" id="card_name" required autocomplete="cc-name">
-        </div>
-        <div class="field">
-          <label for="card_number">Card number</label>
-          <input type="text" id="card_number" inputmode="numeric" placeholder="•••• •••• •••• ••••" required autocomplete="cc-number">
-        </div>
-        <div class="card-row">
-          <div class="field">
-            <label for="card_expiry">Expiry</label>
-            <input type="text" id="card_expiry" placeholder="MM / YY" required autocomplete="cc-exp">
-          </div>
-          <div class="field">
-            <label for="card_cvc">Security code</label>
-            <input type="text" id="card_cvc" inputmode="numeric" placeholder="CVC" required autocomplete="cc-csc">
-          </div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Pay now</button>
-        <div class="provider-strip">
-          <span class="provider-chip">PCI-DSS compliant gateway</span>
-          <span class="provider-chip">256-bit encryption</span>
-          <span class="provider-chip">No card data stored by Rotary</span>
-        </div>
-      </form>
+<h2>Secure payment</h2>
+<div class="two-col">
+  <div>
+    <div class="secure-banner">
+      🔒 <span>You're paying through our trusted external payment gateway. Padstow Rotary never sees or stores your card
+        number.</span>
     </div>
 
-    <aside class="summary-box" aria-label="Payment summary">
-      <h3 style="font-size:16px;">You're paying</h3>
-      <div class="summary-row"><span>{{ pending.type_display|default:"Donation" }}</span><span>${{ pending.amount|default:"0.00" }}</span></div>
-      <div class="summary-row total"><span>Total</span><span>${{ pending.amount|default:"0.00" }}</span></div>
-    </aside>
+    <form class="form-wrap" method="post" action="{% url 'payment' %}" id="paymentForm">
+      {% csrf_token %}
+      <p>Please check the details on the right. When you press the button below you will be taken to
+        <strong>Stripe's secure payment page</strong> to enter your card details, then brought back here
+        with your receipt.
+      </p>
+      <button type="submit" class="btn btn-primary btn-block">Pay securely with Stripe</button>
+      <p class="muted" style="margin-top:12px;"><a
+          href="{% if pending.type == 'donation' %}{% url 'donate' %}{% else %}{% url 'shop' %}{% endif %}">← Change my
+          details</a></p>
+      <div class="provider-strip">
+        <span class="provider-chip">PCI-DSS compliant gateway</span>
+        <span class="provider-chip">Encrypted connection</span>
+        <span class="provider-chip">No card data stored by Rotary</span>
+      </div>
+    </form>
   </div>
+
+  <aside class="summary-box" aria-label="Payment summary">
+    <h3 style="font-size:16px;">You're paying</h3>
+    {% for item in pending.items %}<div class="summary-row"><span>{{ item.product_name }} × {{ item.quantity }}</span>
+    </div>{% endfor %}
+    {% if pending.fulfilment == "delivery" %}<div class="summary-row"><span>Local delivery</span><span>$15.00</span>
+    </div>{% endif %}
+    <div class="summary-row"><span>{{ pending.type_display|default:"Donation" }}</span><span>${{
+        pending.amount|floatformat:2|default:"0.00" }}</span></div>
+    <div class="summary-row total"><span>Total</span><span>${{ pending.amount|floatformat:2|default:"0.00" }}</span>
+    </div>
+  </aside>
+</div>
 {% endblock %}

@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: rotary-padstow
+    runtime: python
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: gunicorn config.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CREDENTIALS_JSON
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STAFF_USERNAME
+        sync: false
+      - key: STAFF_PASSWORD
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM_ADDRESS
+        sync: false

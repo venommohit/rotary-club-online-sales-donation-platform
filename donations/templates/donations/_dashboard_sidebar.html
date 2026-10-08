@@ -3,5 +3,9 @@
   <a href="{% url 'dashboard' %}" class="{% if active_tab == 'overview' %}active{% endif %}">Overview</a>
   <a href="{% url 'dashboard_transactions' %}" class="{% if active_tab == 'transactions' %}active{% endif %}">Orders &amp; donations</a>
   <a href="{% url 'dashboard_reports' %}" class="{% if active_tab == 'reports' %}active{% endif %}">Basic reports</a>
-  <a href="{% url 'home' %}" style="margin-top:18px;color:#BFE6CD;">← Exit to public site</a>
+  <form method="post" action="{% url 'dashboard_logout' %}" style="margin-top:18px;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline" style="width:100%;">Sign out</button>
+  </form>
+  <a href="{% url 'home' %}" style="margin-top:12px;color:#BFE6CD;">← Exit to public site</a>
 </div>

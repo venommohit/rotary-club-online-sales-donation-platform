@@ -8,18 +8,12 @@
     <h2>Thank you — you're all set</h2>
     <p class="muted">A confirmation and digital receipt have been sent to your email automatically. No further action is needed.</p>
 
-    <!--
-      `transaction` is a plain dict from Firestore (see
-      donations/firestore_data.get_transaction), with type_display /
-      status_display precomputed in the view since Firestore documents
-      don't have Django model methods like get_FOO_display().
-    -->
     <div class="receipt" aria-label="Digital receipt">
       <div class="receipt-row"><span>Reference</span><span>{{ transaction.reference }}</span></div>
       <div class="receipt-row"><span>Type</span><span>{{ transaction.type_display }}</span></div>
       <div class="receipt-row"><span>Name</span><span>{{ transaction.name }}</span></div>
       <div class="receipt-row"><span>Date</span><span>{{ transaction.created_at|date:"d M Y" }}</span></div>
-      <div class="receipt-row"><span>Amount paid</span><span>${{ transaction.amount }}</span></div>
+      <div class="receipt-row"><span>Amount paid</span><span>${{ transaction.amount|floatformat:2 }}</span></div>
       <div class="receipt-row"><span>Status</span><span class="status {{ transaction.status }}">{{ transaction.status_display }}</span></div>
     </div>
 

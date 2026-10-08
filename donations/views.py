@@ -56,9 +56,13 @@ def _notify(reference):
 # Public pages
 # ---------------------------------------------------------------------------
 
+
 def home(request):
-    return render(request, "donations/home.html",
-                  {"last_reference": request.session.get("last_reference")})
+    # The receipt page is only for the person who has just paid. Once they come
+    # back to the home page we forget it, so the next person to use a shared
+    # device can't see someone else's order. The emailed receipt is the record.
+    request.session.pop("last_reference", None)
+    return render(request, "donations/home.html")
 
 
 def donate(request):

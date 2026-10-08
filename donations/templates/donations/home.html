@@ -44,12 +44,9 @@
       <div class="card path-card">
         <div class="icon" aria-hidden="true">🧾</div>
         <h3>Already ordered?</h3>
-        <p class="muted">Every purchase and donation gets an automatic confirmation and digital receipt by email.</p>
-        {% if last_reference %}
-          <a class="btn btn-outline btn-block" href="{% url 'confirmation' %}?ref={{ last_reference }}">View your last receipt</a>
-        {% else %}
-          <span class="btn btn-outline btn-block" style="opacity:.6;pointer-events:none;">No recent receipt</span>
-        {% endif %}
+              <p class="muted">Every purchase and donation is confirmed by email straight away, with your digital receipt. Check your
+                inbox (and spam folder).</p>
+              <p class="muted">For your privacy we don't keep receipts on this device.</p>
       </div>
     </div>
   </section>
